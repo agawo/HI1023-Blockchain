@@ -3,38 +3,30 @@ import java.util.*;
 public class Blockchain<T> {
     private List<Block<T>> chain = new ArrayList<Block<T>>();
 
+    /**
+     * Blockchain is created with one empty block 0 as the root
+     */
     public Blockchain() {
         @SuppressWarnings("unchecked")
         T[] empty = (T[]) new Object[0];
         this.chain.add(new Block<>(empty, "root", new Date().getTime()));
     }
 
+    /**
+     * Adds one block to the blockchain and checks if all the blocks in the blockchain are valid
+     * @param transactions transaction data of the new block
+     * @return true it the new block was successfully created and added
+     */
     public synchronized boolean addBlock(T[] transactions){
         printState();
-        this.chain.add(new Block<>(transactions, this.chain.get(this.chain.size() - 1).getHash(), new Date().getTime()));
-        return true;
+        return this.chain.add(new Block<>(transactions, this.chain.get(this.chain.size() - 1).getHash(), new Date().getTime()));
     }
 
-    public boolean isValidOld() {
-        boolean result = true;
-        for (int i = 0; i < this.chain.size() - 1; i++) {
-            if(!this.chain.get(i).isHashValid()){
-                System.out.println("WARNING!!!");
-                System.out.println("Invalid hash on the block nr " + i);
-                System.out.println("The invalid transaction: " + Arrays.toString(this.chain.get(i).getTransactions()));
-                result = false;
-                continue;
-            }
-            if (!this.chain.get(i).compareHash(this.chain.get(i + 1).getPreviousHash())) {
-                System.out.println("WARNING!!!");
-                System.out.println("Invalid block nr " + i);
-                System.out.println("The invalid transaction: " + Arrays.toString(this.chain.get(i).getTransactions()));
-                result = false;
-            }
-        }
-        return result;
-    }
-
+    /**
+     * Checks the validity of all the block of the blockchain
+     * - if the block's hash is still valid and if the previous block's hash hasn't been changed
+     * @return the list of invalid blocks
+     */
     private ArrayList<Integer> getInvalidBlocks(){
         ArrayList<Integer> result = new ArrayList<>();
         for (int i = 0; i < this.chain.size() - 1; i++) {
@@ -49,6 +41,10 @@ public class Blockchain<T> {
         return result;
     }
 
+    /**
+     * Checks if all the blocks in the blockchain are valid
+     * @return boolean
+     */
     public boolean isValid(){
         if (getInvalidBlocks().size() == 0) {
             return true;
@@ -56,10 +52,18 @@ public class Blockchain<T> {
         return false;
     }
 
+    /**
+     * Return the blockchain's length
+     * @return number of blocks with the block 0
+     */
     public int getChainSize(){
         return this.chain.size();
     }
 
+    /**
+     * Returns all the transactions in the blockchain, from every block
+     * @return a list of all transactions
+     */
     public synchronized ArrayList<T[]> getTransactions() {
         ArrayList<T[]> transactions = new ArrayList<>();
         if(this.chain.size() == 1){
@@ -71,16 +75,9 @@ public class Blockchain<T> {
         return transactions;
     }
 
-    public synchronized void printState(){
-        if(isValid()){
-            System.out.println("The blockchain is valid");
-        }
-        else {
-            System.out.println("The blockchain is NOT valid!!!");
-            System.out.println("Invalid blocks: " + getInvalidBlocks());
-        }
-    }
-
+    /**
+     * Prints out all the transactions in the blockchain and marks those from invalid blocks
+     */
     public synchronized void printAllTransactions(){
         ArrayList<Integer> invalidBlocks = this.getInvalidBlocks();
         int index = 1;
@@ -94,6 +91,23 @@ public class Blockchain<T> {
         }
     }
 
+    /**
+     * Checks and prints out the state of the blockchain, if it's valid and if not which blocks are invalid
+     */
+    public synchronized void printState(){
+        if(isValid()){
+            System.out.println("The blockchain is valid");
+        }
+        else {
+            System.out.println("WARNING! The blockchain is NOT valid!!!");
+            System.out.println("Invalid blocks: " + getInvalidBlocks());
+        }
+    }
+
+    /**
+     * Compares the blockchain with other copies of it and changes the invalid blocks to the most common version in other copies
+     * @param otherNodesCopies other copies of the blockchain from different nodes
+     */
     public synchronized void validateBlockchain(ArrayList<ArrayList<Block<T>>> otherNodesCopies) {
         ArrayList<Integer> invalidBlocks = getInvalidBlocks();
         for (Integer index: invalidBlocks) {
@@ -120,6 +134,11 @@ public class Blockchain<T> {
                 '}';
     }
 
+    /**
+     * Returns a copy of a block from the blockchain
+     * @param index of the block
+     * @return copy of the block
+     */
     public Block<T> getBlock(int index){
         if (index < this.chain.size()){
             return this.chain.get(index).makeCopy();
@@ -128,6 +147,7 @@ public class Blockchain<T> {
     }
 
     // this shouldn't exist, it's for demonstration purposes only
+    // returns the true block, not just a copy of it
     public Block<T> getTrueBlock(int index){
         if (index < this.chain.size()){
             return this.chain.get(index);

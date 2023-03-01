@@ -17,25 +17,26 @@ public class MaliciousSimulator extends Thread{
         for (int i = 0; i < repetitionNumber; i++){
             System.out.println("Malicious user " + id + " is sleeping");
             try {
-                sleep( (long)random.nextInt(100)*1000 + 500);
+                sleep( (long)random.nextInt(70)*1000 + 500);
             } catch (InterruptedException e) {
                 throw new RuntimeException(e);
             }
             System.out.println("Malicious user " + id + " is active");
             int chainSize = blockchain.getChainSize();
-            int blockIndex = random.nextInt(chainSize - 1) + 1;
-            Block<String> block = blockchain.getTrueBlock(blockIndex);
-            String[] newData = block.getTransactions();
-            newData[0] = overrideTransaction(newData[0]);
-            block.setTransactions(newData);
+            if(chainSize > 2){
+                int blockIndex = random.nextInt(chainSize - 2) + 1;
+                Block<String> block = blockchain.getTrueBlock(blockIndex);
+                String[] newData = block.getTransactions();
+                newData[0] = overrideTransaction(newData[0]);
+                block.setTransactions(newData);
 
-            if(this.type == 1){
-                String newHash = block.createHash();
-                block.setThisHash(newHash);
+                if(this.type == 1){
+                    String newHash = block.createHash();
+                    block.setThisHash(newHash);
+                }
+                System.out.println("### Malicious user " + id + " has changed block nr " + blockIndex);
             }
-            System.out.println("### Malicious user " + id + " has changed block nr " + blockIndex);
         }
-
     }
 
     private String overrideTransaction(String oldTransaction){
